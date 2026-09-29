@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Life & MHT CET Prep Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .locked-done { background-color: #f0fdf4 !important; border-color: #86efac !important; opacity: 0.85; }
+    .locked-missed { background-color: #fef2f2 !important; border-color: #fca5a5 !important; opacity: 0.6; }
+    .status-pill { font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans pb-12">
+
+  <!-- Header with Date & Day Tracker -->
+  <header class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
+    <div class="max-w-md mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-lg font-bold tracking-tight">Routine & CET Tracker</h1>
+        <p class="text-xs text-indigo-200 font-medium" id="header-date">Loading date...</p>
+      </div>
+      <div class="text-right">
+        <span class="text-xs bg-indigo-900 px-2.5 py-1 rounded-full font-bold text-amber-300 border border-indigo-500" id="header-day-count">
+          Demo Day (Tuesday)
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+
+    <!-- Progress Card -->
+    <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Today's Discipline</h2>
+        <span class="text-xs font-semibold text-indigo-600" id="current-time">00:00 AM</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="relative flex items-center justify-center">
+          <div class="w-20 h-20 rounded-full border-4 border-indigo-600 flex items-center justify-center text-xl font-black text-indigo-700" id="overall-progress">
+            0%
+          </div>
+        </div>
+        <div class="flex-1 grid grid-cols-3 gap-2 text-center text-xs">
+          <div class="p-2 bg-emerald-50 rounded-xl border border-emerald-100">
+            <span class="block text-base font-bold text-emerald-700" id="done-count">0</span>
+            <span class="text-slate-500 font-medium">Done</span>
+          </div>
+          <div class="p-2 bg-rose-50 rounded-xl border border-rose-100">
+            <span class="block text-base font-bold text-rose-700" id="missed-count">0</span>
+            <span class="text-slate-500 font-medium">Missed</span>
+          </div>
+          <div class="p-2 bg-amber-50 rounded-xl border border-amber-100">
+            <span class="block text-base font-bold text-amber-700" id="pending-count">0</span>
+            <span class="text-slate-500 font-medium">Pending</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thyroid & Health Quick Logs -->
+    <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Thyroid & Self Care</h2>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div class="p-2.5 border rounded-xl flex justify-between items-center bg-slate-50">
+          <span class="font-medium text-slate-700">Water (Glasses)</span>
+          <div class="flex items-center space-x-1.5">
+            <button onclick="changeWater(-1)" class="w-6 h-6 bg-slate-200 rounded-lg font-bold text-slate-700">-</button>
+            <span id="water-count" class="font-bold text-indigo-700 w-4 text-center">0</span>
+            <button onclick="changeWater(1)" class="w-6 h-6 bg-indigo-600 text-white rounded-lg font-bold">+</button>
+          </div>
+        </div>
+        <div class="p-2.5 border rounded-xl flex justify-between items-center bg-slate-50">
+          <span class="font-medium text-slate-700">Thyroid Meds</span>
+          <input type="checkbox" id="thyroid-check" onchange="toggleHabit('thyroid')" class="w-4 h-4 accent-indigo-600 rounded">
+        </div>
+        <div class="p-2.5 border rounded-xl flex justify-between items-center bg-slate-50">
+          <span class="font-medium text-slate-700">AM Skin Care</span>
+          <input type="checkbox" id="am-skin-check" onchange="toggleHabit('amSkin')" class="w-4 h-4 accent-indigo-600 rounded">
+        </div>
+        <div class="p-2.5 border rounded-xl flex justify-between items-center bg-slate-50">
+          <span class="font-medium text-slate-700">PM Skin Care</span>
+          <input type="checkbox" id="pm-skin-check" onchange="toggleHabit('pmSkin')" class="w-4 h-4 accent-indigo-600 rounded">
+        </div>
+      </div>
+    </section>
+
+    <!-- Strict Time-Gated Routine -->
+    <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Daily Locked Schedule</h2>
+        <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold">Strict Mode</span>
+      </div>
+      <div id="routine-list" class="space-y-2.5">
+        <!-- Tasks dynamically rendered -->
+      </div>
+    </section>
+
+    <!-- Focus Timer -->
+    <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-2">
+      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Study Focus Timer</h2>
+      <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl">
+        <div class="text-2xl font-mono font-black text-slate-800" id="timer-readout">25:00</div>
+        <div class="flex space-x-1.5">
+          <button onclick="setTimer(25)" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow-sm">25m</button>
+          <button onclick="setTimer(50)" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow-sm">50m</button>
+          <button onclick="clearTimer()" class="px-2 py-1.5 bg-slate-200 text-slate-600 text-xs font-bold rounded-lg">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7-Day Consistency Chart -->
+    <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Weekly Completion Report</h2>
+      <canvas id="weeklyChart" height="130"></canvas>
+    </section>
+
+  </main>
+
+  <script>
+    const schedule = [
+      { id: 't1', title: 'Wake Up & Water', start: '06:00', end: '07:00' },
+      { id: 't2', title: 'Gentle Walk / Stretching', start: '06:30', end: '07:30' },
+      { id: 't3', title: 'Breakfast & Fresh Up', start: '07:30', end: '08:30' },
+      { id: 't4', title: 'MHT CET Study Block 1', start: '08:30', end: '11:30' },
+      { id: 't5', title: 'Lunch Preparation & Meal', start: '11:30', end: '14:00' },
+      { id: 't6', title: 'Tech Upskill & Job Search', start: '14:00', end: '15:30' },
+      { id: 't7', title: 'MHT CET Study Block 2', start: '15:30', end: '17:00' },
+      { id: 't8', title: 'Evening Walk & Tea Break', start: '17:00', end: '18:00' },
+      { id: 't9', title: 'Dinner Cooking & Relaxation', start: '18:00', end: '20:30' },
+      { id: 't10', title: 'MHT CET Night Review', start: '21:30', end: '22:30' }
+    ];
+
+    let store = {
+      date: new Date().toISOString().split('T')[0],
+      doneTasks: {},
+      water: 0,
+      habits: { thyroid: false, amSkin: false, pmSkin: false },
+      history: [0, 0, 0, 0, 0, 0, 0] // 7 days tracking
+    };
+
+    function initStore() {
+      const saved = localStorage.getItem('strictRoutineDataV2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.date === new Date().toISOString().split('T')[0]) {
+          store = parsed;
+        }
+      }
+    }
+
+    function persistStore() {
+      store.date = new Date().toISOString().split('T')[0];
+      localStorage.setItem('strictRoutineDataV2', JSON.stringify(store));
+      renderUI();
+    }
+
+    function getMinutes(timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function updateHeader() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+      document.getElementById('header-date').innerText = now.toLocaleDateString('en-US', options);
+      document.getElementById('current-time').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const dayOfWeek = now.getDay(); // 0 = Sun, 2 = Tue, 3 = Wed
+      const dayCounter = document.getElementById('header-day-count');
+      
+      if (dayOfWeek === 2) {
+        dayCounter.innerText = "Demo Day (Tuesday)";
+      } else if (dayOfWeek >= 3 || dayOfWeek === 0 || dayOfWeek === 1) {
+        const dayNum = dayOfWeek >= 3 ? dayOfWeek - 2 : dayOfWeek + 5;
+        dayCounter.innerText = `Day ${dayNum} Active`;
+      }
+    }
+
+    function renderSchedule() {
+      const container = document.getElementById('routine-list');
+      container.innerHTML = '';
+      
+      const now = new Date();
+      const currentMin = now.getHours() * 60 + now.getMinutes();
+
+      schedule.forEach(item => {
+        const startMin = getMinutes(item.start);
+        const endMin = getMinutes(item.end);
+
+        let status = 'pending';
+        if (store.doneTasks[item.id]) {
+          status = 'done';
+        } else if (currentMin > endMin) {
+          status = 'missed';
+        }
+
+        const isLocked = status === 'done' || status === 'missed';
+
+        const card = document.createElement('div');
+        card.className = `p-3 border rounded-xl flex items-center justify-between transition-all ${
+          status === 'done' ? 'locked-done border-emerald-200' : 
+          status === 'missed' ? 'locked-missed border-rose-200' : 
+          'bg-white border-slate-200 shadow-sm'
+        }`;
+
+        card.innerHTML = `
+          <div>
+            <div class="font-bold text-xs ${status === 'done' ? 'line-through text-emerald-800' : status === 'missed' ? 'text-rose-800' : 'text-slate-800'}">${item.title}</div>
+            <div class="text-[10px] text-slate-400 font-medium">${item.start} - ${item.end}</div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="status-pill ${
+              status === 'done' ? 'bg-emerald-100 text-emerald-800' : 
+              status === 'missed' ? 'bg-rose-100 text-rose-800' : 
+              'bg-amber-100 text-amber-800'
+            }">${status}</span>
+            <input type="checkbox" 
+                   ${store.doneTasks[item.id] ? 'checked' : ''} 
+                   ${isLocked ? 'disabled' : ''} 
+                   onchange="completeTask('${item.id}', ${startMin}, ${endMin})"
+                   class="w-5 h-5 accent-indigo-600 rounded cursor-pointer disabled:cursor-not-allowed">
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function completeTask(taskId, startMin, endMin) {
+      const now = new Date();
+      const currentMin = now.getHours() * 60 + now.getMinutes();
+
+      if (currentMin >= startMin && currentMin <= endMin) {
+        store.doneTasks[taskId] = true;
+        persistStore();
+      } else {
+        alert("Action Locked! You can only complete this task during its scheduled time window.");
+        renderSchedule();
+      }
+    }
+
+    function changeWater(delta) {
+      store.water = Math.max(0, store.water + delta);
+      persistStore();
+    }
+
+    function toggleHabit(key) {
+      store.habits[key] = !store.habits[key];
+      persistStore();
+    }
+
+    function renderUI() {
+      document.getElementById('water-count').innerText = store.water;
+      document.getElementById('thyroid-check').checked = store.habits.thyroid;
+      document.getElementById('am-skin-check').checked = store.habits.amSkin;
+      document.getElementById('pm-skin-check').checked = store.habits.pmSkin;
+
+      renderSchedule();
+
+      const now = new Date();
+      const currentMin = now.getHours() * 60 + now.getMinutes();
+      let done = 0, missed = 0, pending = 0;
+
+      schedule.forEach(item => {
+        const endMin = getMinutes(item.end);
+        if (store.doneTasks[item.id]) {
+          done++;
+        } else if (currentMin > endMin) {
+          missed++;
+        } else {
+          pending++;
+        }
+      });
+
+      document.getElementById('done-count').innerText = done;
+      document.getElementById('missed-count').innerText = missed;
+      document.getElementById('pending-count').innerText = pending;
+
+      const total = schedule.length;
+      const rate = Math.round((done / total) * 100);
+      document.getElementById('overall-progress').innerText = `${rate}%`;
+    }
+
+    // Timer Implementation
+    let timerRef = null;
+    function setTimer(mins) {
+      clearTimer();
+      let totalSecs = mins * 60;
+      timerRef = setInterval(() => {
+        totalSecs--;
+        const m = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+        const s = String(totalSecs % 60).padStart(2, '0');
+        document.getElementById('timer-readout').innerText = `${m}:${s}`;
+        if (totalSecs <= 0) {
+          clearInterval(timerRef);
+          alert("Focus session completed!");
+        }
+      }, 1000);
+    }
+
+    function clearTimer() {
+      if (timerRef) clearInterval(timerRef);
+      document.getElementById('timer-readout').innerText = "25:00";
+    }
+
+    // Chart Setup
+    function renderChart() {
+      const ctx = document.getElementById('weeklyChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'],
+          datasets: [{
+            data: store.history,
+            backgroundColor: '#6366f1',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true, max: 100 } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Initialize
+    initStore();
+    updateHeader();
+    setInterval(updateHeader, 1000);
+    setInterval(renderSchedule, 30000); // Check missed status every 30 sec
+    renderUI();
+    renderChart();
+  </script>
+</body>
+</html>
